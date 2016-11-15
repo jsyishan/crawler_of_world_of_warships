@@ -40,7 +40,22 @@ class CrawlerOfWOWS(object):
 
         with request.urlopen(req) as f:
             self.data['ship_json'] = json.loads(f.read().decode('utf-8'))
-            #print(self.data['ship_json'])
+            data = self.data['ship_json']
+            self.data['ships_info'] = []
+            for dt in data:
+                self.data['ships_info'].append(dt)  # All ships' information in self.data['ships_info']
+
+            def calc_info(attr):
+                self.data[attr] = 0
+                i = 0
+                for j in range(len(self.data['ships_info'])):
+                    self.data[attr] += self.data['ships_info'][i][attr]  # Number of battles
+                    i += 1
+                print('%s: %s' % (attr, self.data[attr]))
+
+            calc_info('battles')
+            calc_info('teambattles')
+            self.data['singlebattles'] = self.data['battles'] - self.data['teambattles']
 
     def input_player(self, name, zone):
         self.data['player'] = name
@@ -49,21 +64,21 @@ class CrawlerOfWOWS(object):
         self.get_user_info()
         self.get_data_info()
 
-        req_url = self.url + '?name=' + self.data['player'] + '&zone=' + self.data['zone']
+        # req_url = self.url + '?name=' + self.data['player'] + '&zone=' + self.data['zone']
+        #
+        # req = request.Request(req_url)
+        # req.add_header(self.user_agent[0], self.user_agent[1])
 
-        req = request.Request(req_url)
-        req.add_header(self.user_agent[0], self.user_agent[1])
+        # with request.urlopen(req) as f:
+        #     self.data['data'] = f.read()
+        #     print('Status:', f.status, f.reason)
+        #     self.soup_match()
 
-        with request.urlopen(req) as f:
-            self.data['data'] = f.read()
-            print('Status:', f.status, f.reason)
-            self.soup_match()
-
-    def soup_match(self):
-        soup = BeautifulSoup(self.data['data'], 'html.parser', from_encoding='utf-8')
-        content = soup.find('div', id='total').findAll('span', {'class': 'value'})
-        for i in content:
-            print(i.string)
+    # def soup_match(self):
+    #     soup = BeautifulSoup(self.data['data'], 'html.parser', from_encoding='utf-8')
+    #     content = soup.find('div', id='total').findAll('span', {'class': 'value'})
+    #     for i in content:
+    #         print(i.string)
 
 
 if __name__ == '__main__':
