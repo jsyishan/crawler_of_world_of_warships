@@ -8,9 +8,9 @@ __author__ = 'Eugen'
 class PlayerInfo(object):
     def __init__(self, name, zone):
         self.data = {'player': name, 'zone': zone}
-        self.url = 'http://rank.kongzhong.com/wows/index.html'
-        self.url_get_user_info = 'http://rank.kongzhong.com/Data/action/WowsAction/getLogin'
-        self.usr_get_data_info = 'http://rank.kongzhong.com/Data/action/WowsAction/getShipInfo'
+        self.url = 'http://182.18.61.50/wows/index.html'
+        self.url_get_user_info = 'http://182.18.61.50/Data/action/WowsAction/getLogin'
+        self.usr_get_data_info = 'http://182.18.61.50/Data/action/WowsAction/getShipInfo'
 
         self.user_agent = ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'
                                          ' AppleWebKit/537.36'
@@ -29,9 +29,14 @@ class PlayerInfo(object):
 
         with request.urlopen(req) as f:
             got_json = json.loads(f.read().decode('utf-8'))
-            self.data['aid'] = got_json['account_db_id']
-            self.data['name'] = got_json['nick']
-            print('Aid of User \'%s\' is %s' % (self.data['name'], self.data['aid']))
+            if 'errno' not in got_json.keys():
+                self.data['aid'] = got_json['account_db_id']
+                self.data['name'] = got_json['nick']
+                print('Aid of User \'%s\' is %s' % (self.data['name'], self.data['aid']))
+                return True
+            print('Error: Check for the information that you input!')
+            return False
+
 
     def get_data_info(self):
         req_url = self.usr_get_data_info + '?aid=' + self.data['aid']
@@ -66,11 +71,11 @@ class PlayerInfo(object):
             self.data['teamwinrate'] = self.data['teamwins'] / self.data['teambattles']
             self.data['singlewinrate'] = self.data['singlewins'] / self.data['singlebattles']
 
-
     def get_info(self):
         print('Trying connecting to the server...')
-        self.get_user_info()
-        self.get_data_info()
+        hasUser = self.get_user_info()
+        if hasUser:
+            self.get_data_info()
 
         # req_url = self.url + '?name=' + self.data['player'] + '&zone=' + self.data['zone']
         #
@@ -105,5 +110,3 @@ def get_user():
 if __name__ == '__main__':
     players = []
     get_user()
-
-
