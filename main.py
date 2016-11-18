@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from urllib import request, parse
-from bs4 import BeautifulSoup
 import json
 
 __author__ = 'Eugen'
@@ -28,15 +29,15 @@ class PlayerInfo(object):
         req.add_header(self.user_agent[0], self.user_agent[1])
 
         with request.urlopen(req) as f:
-            got_json = json.loads(f.read().decode('utf-8'))
-            if 'errno' not in got_json.keys():
-                self.data['aid'] = got_json['account_db_id']
-                self.data['name'] = got_json['nick']
+            self.data['user_json'] = json.loads(f.read().decode('utf-8'))
+            data = self.data['user_json']
+            if 'errno' not in data.keys():
+                self.data['aid'] = data['account_db_id']
+                self.data['name'] = data['nick']
                 print('Aid of User \'%s\' is %s' % (self.data['name'], self.data['aid']))
                 return True
             print('Error: Check for the information that you input!')
             return False
-
 
     def get_data_info(self):
         req_url = self.usr_get_data_info + '?aid=' + self.data['aid']
@@ -50,20 +51,30 @@ class PlayerInfo(object):
             self.data['ships_info'] = []
             for dt in data:
                 self.data['ships_info'].append(dt)  # All ships' information in self.data['ships_info']
+            ships_info = self.data['ships_info']
+
+            self.data['ships_name'] = []
+
+            def get_ship_name():
+                jsonFile = 'shipDict.json'
+                fp = open(jsonFile, 'r', encoding='utf-8')
+                shipDict = json.loads(fp.read())
+                fp.close()
+                for ship in shipDict:
+                    id_name = {'id': ship['cd'], 'name': ship['alias']}
+                    self.data['ships_name'].append(id_name)  # it contains [x]{'id': int, 'name': str}
 
             def calc_info(attr):
                 self.data[attr] = 0
                 i = 0
-                for j in range(len(self.data['ships_info'])):
-                    self.data[attr] += self.data['ships_info'][i][attr]  # Number of battles
+                for j in range(len(ships_info)):
+                    self.data[attr] += ships_info[i][attr]  # Number of battles
                     i += 1
                 print('%s: %s' % (attr, self.data[attr]))
 
-            calc_info('battles')
-            calc_info('teambattles')
-            calc_info('wins')
-            calc_info('teamwins')
-            calc_info('damage')
+            calc_attr = ['battles', 'teambattles', 'wins', 'teamwins', 'damage']
+            for i in calc_attr:
+                calc_info(i)
 
             self.data['singlebattles'] = self.data['battles'] - self.data['teambattles']
             self.data['singlewins'] = self.data['wins'] - self.data['teamwins']
@@ -71,28 +82,14 @@ class PlayerInfo(object):
             self.data['teamwinrate'] = self.data['teamwins'] / self.data['teambattles']
             self.data['singlewinrate'] = self.data['singlewins'] / self.data['singlebattles']
 
+            get_ship_name()
+
     def get_info(self):
         print('Trying connecting to the server...')
         hasUser = self.get_user_info()
         if hasUser:
             self.get_data_info()
 
-        # req_url = self.url + '?name=' + self.data['player'] + '&zone=' + self.data['zone']
-        #
-        # req = request.Request(req_url)
-        # req.add_header(self.user_agent[0], self.user_agent[1])
-
-        # with request.urlopen(req) as f:
-        #     self.data['data'] = f.read()
-        #     print('Status:', f.status, f.reason)
-        #     self.soup_match()
-
-
-# def soup_match(self):
-#     soup = BeautifulSoup(self.data['data'], 'html.parser', from_encoding='utf-8')
-#     content = soup.find('div', id='total').findAll('span', {'class': 'value'})
-#     for i in content:
-#         print(i.string)
 
 def get_user():
     # name = parse.quote(input('玩家昵称：'))
